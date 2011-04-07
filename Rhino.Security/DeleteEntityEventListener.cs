@@ -32,7 +32,7 @@
 				if (entityReference != null) {
 					var childSession = deleteEvent.Session.GetSession(NHibernate.EntityMode.Poco);
 
-					childSession.Delete(entityReference);
+					// childSession.Delete(entityReference);
 
 					//Also remove EntityReferencesToEntitiesGroups and Permissions that reference this entity
 
