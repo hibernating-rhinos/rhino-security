@@ -34,7 +34,7 @@ namespace Rhino.Security.Tests
             var sillyContainer = new SillyContainer();
             ServiceLocator.SetLocatorProvider(() => sillyContainer);
 
-            Assert.NotNull(typeof(System.Data.SQLite.SQLiteConnection));
+            Assert.NotNull(typeof(System.Data.SqlClient.SqlConnection));
 
             var cfg = new Configuration()
                 .SetProperty(Environment.ConnectionDriver, typeof(SqlClientDriver).AssemblyQualifiedName)
