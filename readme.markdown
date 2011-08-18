@@ -21,9 +21,9 @@ Read the [How to Use.txt](http://github.com/ayende/rhino-security/raw/master/How
 More Information
 ----------------
 
-More information about the library can be found [in the Rhino Security category on Ayende's blog](http://ayende.com/Blog/category/548.aspx).
+More information about the library can be found [in the Rhino Security category on Ayende's blog](http://ayende.com/blog/tags/rhino-security).
 
-Try [this Google search](rhino security nhibernate) to find a ton of other information about it.    
+Try [this Google search](http://www.google.com/search?q=rhino+security+nhibernate) to find a ton of other information about it.    
 
 
 -----
