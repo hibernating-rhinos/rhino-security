@@ -3,24 +3,27 @@ properties {
   $lib_dir = "$base_dir\SharedLibs"
   $build_dir = "$base_dir\build" 
   $buildartifacts_dir = "$build_dir\" 
-  $sln_file = "$base_dir\Rhino.Security-vs2008.sln" 
-  $version = "1.3.0.0"
+  $sln_file = "$base_dir\Rhino.Security.sln" 
+  $version = "1.3.2.0"
   $humanReadableversion = "1.3"
   $tools_dir = "$base_dir\Tools"
   $release_dir = "$base_dir\Release"
   $uploadCategory = "Rhino-Security"
   $uploader = "..\Uploader\S3Uploader.exe"
+  $NuGetPackageName = "SpecsFor" #http://trycatchfail.com/blog/post/Building-And-Publishing-NuGet-Packages-With-psake.aspx
+  $NuGetPackDir = "$OutputDir" + "Pack"
+  $NuSpecFileName = "SpecsFor.nuspec"
 } 
 
 include .\psake_ext.ps1
-include .\SharedLibs\build-ext\x64detection.ps1
+# include .\SharedLibs\build-ext\x64detection.ps1
 	
 task default -depends Release
 
 task Clean { 
   remove-item -force -recurse $buildartifacts_dir -ErrorAction SilentlyContinue 
   remove-item -force -recurse $release_dir -ErrorAction SilentlyContinue 
-  Build-SharedLibs-For-Processor 
+  # Build-SharedLibs-For-Processor 
 } 
 
 task Init -depends Clean { 
@@ -61,13 +64,12 @@ task Compile -depends Init {
   if ($lastExitCode -ne 0) {
         throw "Error: Failed to execute msbuild"
   }
-
 } 
 
 task Test -depends Compile {
   $old = pwd
   cd $build_dir
-  exec "$tools_dir\xunit\xunit.console.exe" "$build_dir\Rhino.Security.Tests.dll"
+  exec "$tools_dir\xunit\xunit.console.x86.exe" "$build_dir\Rhino.Security.Tests.dll"
   cd $old		
 }
 
@@ -82,6 +84,24 @@ task Release -depends Test {
 	if ($lastExitCode -ne 0) {
         throw "Error: Failed to execute ZIP command"
     }
+}
+
+task Pack -depends Build {
+
+    mkdir $NuGetPackDir
+    cp "$NuSpecFileName" "$NuGetPackDir"
+
+    mkdir "$NuGetPackDir\lib"
+    cp "$SpecsForOutput\SpecsFor.dll" "$NuGetPackDir\lib"
+
+    cp "$BaseDir\Templates" "$NuGetPackDir" -Recurse
+    Remove-Item -Force "$NuGetPackDir\Templates\.gitignore"
+    
+    $Spec = [xml](get-content "$NuGetPackDir\$NuSpecFileName")
+    $Spec.package.metadata.version = ([string]$Spec.package.metadata.version).Replace("{Version}",$Version)
+    $Spec.Save("$NuGetPackDir\$NuSpecFileName")
+
+    exec { nuget pack "$NuGetPackDir\$NuSpecFileName" }
 }
 
 task Upload -depends Release {

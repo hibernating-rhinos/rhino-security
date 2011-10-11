@@ -9,19 +9,19 @@ namespace Rhino.Security.Tests
         [Fact]
         public void WillNotAcceptNullName()
         {
-            Assert.Throws<ArgumentException>("Name must have a value", () => new SecurityInfo(null, "1"));
+            Assert.Throws<ArgumentException>(() => new SecurityInfo(null, "1"));
         }
 
         [Fact]
         public void WillNotAcceptEmptyName()
         {
-            Assert.Throws<ArgumentException>("Name must have a value", () => new SecurityInfo("", "1"));
+            Assert.Throws<ArgumentException>(() => new SecurityInfo("", "1"));
         }
 
         [Fact]
         public void WillNotAcceptNullIdentifier()
         {
-            Assert.Throws<ArgumentException>("Identifier must not be null", () => new SecurityInfo("", null));
+            Assert.Throws<ArgumentException>(() => new SecurityInfo("", null));
         }
     }
 }

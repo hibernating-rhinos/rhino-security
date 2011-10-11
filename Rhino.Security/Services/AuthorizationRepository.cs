@@ -332,6 +332,7 @@ namespace Rhino.Security.Services
 		        SecurityCriterions.AllGroups(user)
 		            .GetExecutableCriteria(session)
 		            .AddOrder(Order.Asc("Name"))
+					.SetCacheRegion("rhino-security-UsersGroup")
                     .SetCacheable(true)
                     .List<UsersGroup>();
 		    return usersGroups.ToArray();
@@ -346,7 +347,8 @@ namespace Rhino.Security.Services
 		{
 			return session.CreateCriteria<UsersGroup>()
                 .Add(Restrictions.Eq("Name", groupName))
-                .SetCacheable(true)
+				.SetCacheRegion("rhino-security-UsersGroup")
+				.SetCacheable(true)
                 .UniqueResult<UsersGroup>();
 		}
 
@@ -482,8 +484,8 @@ namespace Rhino.Security.Services
 		{
 			UsersGroup group = GetUsersGroupByName(usersGroupName);
 			Guard.Against(group == null, "There is no users group named: " + usersGroupName);
-
 			group.Users.Remove(user);
+			session.SessionFactory.EvictQueries("rhino-security-UsersGroup");
 		}
 
 		/// <summary>
@@ -581,6 +583,7 @@ namespace Rhino.Security.Services
                 .Add(Restrictions.Eq("Name", typeof (TEntity).FullName))
                 .SetCacheable(true)
                 .UniqueResult<EntityType>();
+
 			if (entityType == null)
 			{
 				entityType = new EntityType {Name = typeof (TEntity).FullName};

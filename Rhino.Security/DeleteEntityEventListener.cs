@@ -1,11 +1,12 @@
-﻿namespace Rhino.Security
-{
-	using System;
-	using System.Collections.Generic;
-	using NHibernate.Criterion;
-	using NHibernate.Event;
-	using Rhino.Security.Model;
+﻿using System;
+using System.Collections.Generic;
+using NHibernate;
+using NHibernate.Criterion;
+using NHibernate.Event;
+using Rhino.Security.Model;
 
+namespace Rhino.Security
+{
 	/// <summary>
 	/// Litenens for when a secured entity is deleted from the system and deletes 
 	/// associated security data.
@@ -20,17 +21,26 @@
 		/// </summary>
 		/// <param name="deleteEvent">Event object containing the delete operation information.</param>
 		/// <returns>False, indicating the delete operation should not be vetoed.</returns>
-		public bool OnPreDelete(PreDeleteEvent deleteEvent) {
-			var securityKey = Security.ExtractKey(deleteEvent.Entity);
+		public bool OnPreDelete(PreDeleteEvent deleteEvent)
+		{
+			Guid securityKey = Security.ExtractKey(deleteEvent.Entity);
 
-			if (!Guid.Empty.Equals(securityKey)) {
-				EntityReference entityReference = deleteEvent.Session.CreateCriteria<EntityReference>()
-					 .Add(Restrictions.Eq("EntitySecurityKey", securityKey))
-					 .SetCacheable(true)
-					 .UniqueResult<EntityReference>();
+			if (!Guid.Empty.Equals(securityKey))
+			{
+				var entityReference = deleteEvent.Session.CreateCriteria<EntityReference>()
+					.Add(Restrictions.Eq("EntitySecurityKey", securityKey))
+					.SetCacheable(true)
+					.UniqueResult<EntityReference>();
 
-				if (entityReference != null) {
-					var childSession = deleteEvent.Session.GetSession(NHibernate.EntityMode.Poco);
+				if (entityReference != null)
+				{
+					ISession childSession = deleteEvent.Session.GetSession(EntityMode.Poco);
+					
+					// because default flush mode is auto, a read after a scheduled delete will invoke
+					// the auto-flush behaviour, causing a constraint violation exception in the 
+					// underlying database, because there still are EntityGroup entities that need
+					// the deleted EntityReference/SecurityKey.
+					childSession.FlushMode = FlushMode.Commit;
 
 					childSession.Delete(entityReference);
 
@@ -43,7 +53,8 @@
 						.SetCacheable(true)
 						.List<EntitiesGroup>();
 
-					foreach (EntitiesGroup group in entitiesGroups) {
+					foreach (EntitiesGroup group in entitiesGroups)
+					{
 						group.Entities.Remove(entityReference);
 					}
 
@@ -53,7 +64,8 @@
 						.SetCacheable(true)
 						.List<Permission>();
 
-					foreach (Permission permission in permissions) {
+					foreach (Permission permission in permissions)
+					{
 						childSession.Delete(permission);
 					}
 
