@@ -4,21 +4,32 @@ properties {
   $build_dir = "$base_dir\build" 
   $buildartifacts_dir = "$build_dir\" 
   $sln_file = "$base_dir\Rhino.Security.sln" 
-  $version = "1.3.2.0"
+  $version = "1.3.6.0"
   $humanReadableversion = "1.3"
   $tools_dir = "$base_dir\Tools"
   $release_dir = "$base_dir\Release"
   $uploadCategory = "Rhino-Security"
   $uploader = "..\Uploader\S3Uploader.exe"
-  $NuGetPackageName = "SpecsFor" #http://trycatchfail.com/blog/post/Building-And-Publishing-NuGet-Packages-With-psake.aspx
-  $NuGetPackDir = "$OutputDir" + "Pack"
-  $NuSpecFileName = "SpecsFor.nuspec"
+  
+  # core package
+  $NuGetPackageName = "Rhino.Security" #http://trycatchfail.com/blog/post/Building-And-Publishing-NuGet-Packages-With-psake.aspx
+  $NuGetPackDir = Join-Path "$build_dir" "nuspecs"
+  $NuSpecFileName = "Rhino.Security.nuspec"
+  $NuGets = Join-Path $build_dir "nugets"
+  
+  # windsor package
+  $NuGetPackageNameWindsor = "Rhino.Security.Windsor"
+  $NuSpecFileNameWindsor = "$NuGetPackageNameWindsor.nuspec"
+  $NuSpecFileNameWindsor = "Rhino.Security.Windsor.nuspec"
+  
+  $NugetCoreOut = Join-Path $NuGetPackDir $NuGetPackageName
+  $NugetWindOut = Join-Path $NuGetPackDir $NuGetPackageNameWindsor
 } 
 
 include .\psake_ext.ps1
 # include .\SharedLibs\build-ext\x64detection.ps1
 	
-task default -depends Release
+task default -depends Pack
 
 task Clean { 
   remove-item -force -recurse $buildartifacts_dir -ErrorAction SilentlyContinue 
@@ -34,7 +45,7 @@ task Init -depends Clean {
 		-company "Hibernating Rhinos" `
 		-product "Rhino Security $version" `
 		-version $version `
-		-copyright "Hibernating Rhinos & Ayende Rahien 2004 - 2009"
+		-copyright "Hibernating Rhinos & Ayende Rahien 2004 - 2009 & Contributors 2010-2011"
 		
 	Generate-Assembly-Info `
 		-file "$base_dir\Rhino.Security.Tests\Properties\AssemblyInfo.cs" `
@@ -45,6 +56,16 @@ task Init -depends Clean {
 		-version $version `
 		-clsCompliant "false" `
 		-copyright "Hibernating Rhinos & Ayende Rahien 2004 - 2009"
+		
+	Generate-Assembly-Info `
+		-file "$base_dir\Rhino.Security.Windsor\Properties\AssemblyInfo.cs" `
+		-title "Rhino Security Windsor $version" `
+		-description "Windsor Integation with Rhino Security" `
+		-company "Hibernating Rhinos" `
+		-product "Rhino Security Windsor $version" `
+		-version $version `
+		-clsCompliant "false" `
+		-copyright "Interfleet Technology AB 2011"
 		
 	Generate-Assembly-Info `
 		-file "$base_dir\Rhino.Security.ActiveRecord\Properties\AssemblyInfo.cs" `
@@ -73,7 +94,7 @@ task Test -depends Compile {
   cd $old		
 }
 
-task Release -depends Test {
+task Release -depends Test, Pack, Push {
 	& $tools_dir\zip.exe -9 -A -j `
 		$release_dir\Rhino.Security-$humanReadableversion-Build-$env:ccnetnumericlabel.zip `
 		$build_dir\Rhino.Security.dll `
@@ -86,22 +107,57 @@ task Release -depends Test {
     }
 }
 
-task Pack -depends Build {
-
+task PreparePack {
     mkdir $NuGetPackDir
-    cp "$NuSpecFileName" "$NuGetPackDir"
+	mkdir $NugetCoreOut
+	mkdir $NugetWindOut
+    cp $NuSpecFileName $NugetCoreOut
+    cp $NuSpecFileNameWindsor $NugetWindOut
+    mkdir "$NugetCoreOut\lib"
+    mkdir "$NugetCoreOut\lib\net35"
+    mkdir "$NugetWindOut\lib"
+    mkdir "$NugetWindOut\lib\net35"
+}
 
-    mkdir "$NuGetPackDir\lib"
-    cp "$SpecsForOutput\SpecsFor.dll" "$NuGetPackDir\lib"
+task PackCore {
+	$s = Join-Path $NugetCoreOut $NuSpecFileName
 
-    cp "$BaseDir\Templates" "$NuGetPackDir" -Recurse
-    Remove-Item -Force "$NuGetPackDir\Templates\.gitignore"
+    cp "$build_dir\Rhino.Security.dll" "$NugetCoreOut\lib\net35"
+    cp "$build_dir\Rhino.Security.xml" "$NugetCoreOut\lib\net35"
     
-    $Spec = [xml](get-content "$NuGetPackDir\$NuSpecFileName")
+    $Spec = [xml](get-content $s)
     $Spec.package.metadata.version = ([string]$Spec.package.metadata.version).Replace("{Version}",$Version)
-    $Spec.Save("$NuGetPackDir\$NuSpecFileName")
+    $Spec.Save($s)
 
-    exec { nuget pack "$NuGetPackDir\$NuSpecFileName" }
+    & ".\$(Join-Path 'tools' 'nuget.exe')" pack $s
+}
+
+task PackWindsor {
+	$s = Join-Path $NugetWindOut $NuSpecFileNameWindsor
+
+    cp "$build_dir\Rhino.Security.Windsor.dll" "$NugetWindOut\lib\net35"
+    cp "$build_dir\Rhino.Security.Windsor.xml" "$NugetWindOut\lib\net35"
+	
+	$Spec = [xml](get-content $s)
+	$Spec.package.metadata.version = ([string]$Spec.package.metadata.version).Replace("{Version}",$Version)
+    $Spec.package.metadata.dependencies.dependency[1].version = ([string]$Spec.package.metadata.dependencies.dependency[1].version).Replace("{Version}",$Version)
+    $Spec.Save($s)
+
+    & ".\$(Join-Path 'tools' 'nuget.exe')" pack $s
+}
+
+task Pack -depends Compile, PreparePack, PackCore, PackWindsor {
+	mkdir $NuGets
+	rm (Join-Path $NuGets "*.nupkg")
+	mv "*.nupkg" $NuGets
+}
+
+task Push {
+	ls $NuGets | % { 
+		$p = join-path $NuGets $_
+		echo "Pushing from $p"
+		& ".\$(Join-Path 'tools' 'nuget.exe')" push "$p" -Source "http://teamcity:8080/" 
+	}
 }
 
 task Upload -depends Release {

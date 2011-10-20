@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+		<id>Rhino.Security.Windsor</id>
+		<version>{Version}</version>
+		<authors>OSS Contributors</authors>
+		<owners>Henrik Feldt</owners>
+		<licenseUrl>https://raw.github.com/hibernating-rhinos/rhino-security/master/license.txt</licenseUrl>
+		<projectUrl>https://github.com/hibernating-rhinos/rhino-security/</projectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>Adapter for windsor.</description>
+		<tags>nhibernate security authorization windsor</tags>
+		<dependencies>
+			<dependency id="NHibernate" version="3.2.0.4000" />
+			<dependency id="Rhino.Security" version="{Version}" />
+			<dependency id="CommonServiceLocator.WindsorAdapter" version="1.0" />
+		</dependencies>
+	</metadata>
+</package>

@@ -14,8 +14,6 @@ namespace Rhino.Security
 	[Serializable]
 	public class DeleteEntityEventListener : IPreDeleteEventListener
 	{
-		#region IPreDeleteEventListener Members
-
 		/// <summary>
 		/// Handles PreDelete event to delete an entity's associated security data.
 		/// </summary>
@@ -75,7 +73,5 @@ namespace Rhino.Security
 
 			return false;
 		}
-
-		#endregion
 	}
 }

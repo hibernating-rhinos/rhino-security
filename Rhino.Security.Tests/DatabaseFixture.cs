@@ -54,7 +54,7 @@ namespace Rhino.Security.Tests
 
 			session = factory.OpenSession();
 
-			new SchemaExport(cfg).Execute(false, true, false, session.Connection, null);
+			new SchemaExport(cfg).Execute(true, true, false, session.Connection, null);
 
 			session.BeginTransaction();
 
