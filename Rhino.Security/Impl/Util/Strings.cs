@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Rhino.Security.Model;
 using Rhino.Security.Properties;
@@ -40,6 +41,18 @@ namespace Rhino.Security.Impl.Util
 			} while (operationName != "");
 			return names.ToArray();
 		}
+
+        /// <summary>
+        /// Gets the names of all the parent operations (including the current one)
+        /// </summary>
+        /// <param name="operationNames">Names of the operations.</param>
+        /// <remarks>
+        /// Assumes that there is a '/' in the string
+        /// </remarks>
+        public static string[] GetHierarchicalOperationNames(string[] operationNames)
+        {
+            return operationNames.SelectMany<string,string>(GetHierarchicalOperationNames).Distinct().ToArray();
+        }
 
 		/// <summary>
 		/// Joins the names of all the specified entities.

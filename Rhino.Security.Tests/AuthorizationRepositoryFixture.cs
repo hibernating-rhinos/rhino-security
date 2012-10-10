@@ -592,7 +592,7 @@ namespace Rhino.Security.Tests
 
 			var parentOperation = authorizationRepository.GetOperationByName("/Account");
 			Assert.NotNull(parentOperation); // was created in setup
-			Assert.Equal(2, parentOperation.Children.Count); // /Edit, /Delete
+			Assert.Equal(3, parentOperation.Children.Count); // /Edit, /Disable, /Delete
 		}
 
 		[Fact]
@@ -773,7 +773,7 @@ namespace Rhino.Security.Tests
 
 			var parent = authorizationRepository.GetOperationByName("/Account");
 
-			Assert.Equal(0, parent.Children.Count);
+			Assert.Equal(1, parent.Children.Count); // /Disable
 		}
 
 		[Fact]

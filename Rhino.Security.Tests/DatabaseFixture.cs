@@ -99,7 +99,7 @@ namespace Rhino.Security.Tests
 			authorizationRepository.CreateUsersGroup("Administrators");
 			authorizationRepository.CreateEntitiesGroup("Important Accounts");
 			authorizationRepository.CreateOperation("/Account/Edit");
-
+			authorizationRepository.CreateOperation("/Account/Disable");
 
 			authorizationRepository.AssociateUserWith(user, "Administrators");
 			authorizationRepository.AssociateEntityWith(account, "Important Accounts");

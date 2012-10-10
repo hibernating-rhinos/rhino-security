@@ -129,7 +129,7 @@ namespace Rhino.Security.Tests
         }
 
         [Fact]
-        public void CanGetPermissionsByUserAndOpernationName_WhenPermissionOnEverything()
+        public void CanGetPermissionsByUserAndOperationName_WhenPermissionOnEverything()
         {
             permissionsBuilderService
                 .Allow("/Account")
@@ -144,6 +144,42 @@ namespace Rhino.Security.Tests
         }        
 
         [Fact]
+        public void CanGetPermissionsByUserAndMultipleOperationNames_WhenPermissionOnEverything()
+        {
+            permissionsBuilderService
+                .Allow("/Account/Edit")
+                .For(user)
+                .OnEverything()
+                .DefaultLevel()
+                .Save();
+            permissionsBuilderService
+                .Allow("/Account/Disable")
+                .For(user)
+                .OnEverything()
+                .DefaultLevel()
+                .Save();
+            session.Flush();
+
+            Permission[] permissions = permissionService.GetGlobalPermissionsFor(user, new string[] { "/Account/Edit", "/Account/Disable" });
+            Assert.Equal(2, permissions.Length);
+        }
+
+        [Fact]
+        public void CanGetPermissionsByUserAndMultipleOperationNames_WhenPermissionOnASingleOperation()
+        {
+            permissionsBuilderService
+                .Allow("/Account/Edit")
+                .For(user)
+                .OnEverything()
+                .DefaultLevel()
+                .Save();
+            session.Flush();
+
+            Permission[] permissions = permissionService.GetGlobalPermissionsFor(user, new string[] { "/Account/Edit", "/Account/Disable" });
+            Assert.Equal(1, permissions.Length);
+        }
+
+        [Fact]
         public void CanGetPermissionByUserEntityAndOperation()
         {
             permissionsBuilderService
@@ -156,6 +192,42 @@ namespace Rhino.Security.Tests
 
             Permission[] permissions = permissionService.GetPermissionsFor(user, account, "/Account/Edit");
             Assert.Equal(1, permissions.Length);
+        }
+
+        [Fact]
+        public void CanGetPermissionByUserEntityAndMultipleOperations()
+        {
+            permissionsBuilderService
+                .Allow("/Account/Edit")
+                .For(user)
+                .On("Important Accounts")
+                .DefaultLevel()
+                .Save();
+            session.Flush();
+
+            Permission[] permissions = permissionService.GetPermissionsFor(user, account, new string[] { "/Account/Edit", "/Account/Disable" });
+            Assert.Equal(1, permissions.Length);
+        }
+
+        [Fact]
+        public void CanGetPermissionsByUserEntityAndMultipleOperations()
+        {
+            permissionsBuilderService
+                .Allow("/Account/Edit")
+                .For(user)
+                .On("Important Accounts")
+                .DefaultLevel()
+                .Save();
+            permissionsBuilderService
+                .Allow("/Account/Disable")
+                .For(user)
+                .On("Important Accounts")
+                .DefaultLevel()
+                .Save();
+            session.Flush();
+
+            Permission[] permissions = permissionService.GetPermissionsFor(user, account, new string[] { "/Account/Edit", "/Account/Disable" });
+            Assert.Equal(2, permissions.Length);
         }
 
         [Fact]
@@ -174,6 +246,42 @@ namespace Rhino.Security.Tests
         }
 
         [Fact]
+        public void CanGetPermissionByMultipleOperations()
+        {
+            permissionsBuilderService
+                .Allow("/Account/Edit")
+                .For(user)
+                .On(account)
+                .DefaultLevel()
+                .Save();
+            session.Flush();
+
+            Permission[] permissions = permissionService.GetPermissionsFor(new string[] { "/Account/Edit", "/Account/Disable" });
+            Assert.Equal(1, permissions.Length);
+        }
+
+        [Fact]
+        public void CanGetPermissionsByMultipleOperations()
+        {
+            permissionsBuilderService
+                .Allow("/Account/Edit")
+                .For(user)
+                .On(account)
+                .DefaultLevel()
+                .Save();
+            permissionsBuilderService
+                .Allow("/Account/Disable")
+                .For(user)
+                .On(account)
+                .DefaultLevel()
+                .Save();
+            session.Flush();
+
+            Permission[] permissions = permissionService.GetPermissionsFor(new string[] { "/Account/Edit", "/Account/Disable" });
+            Assert.Equal(2, permissions.Length);
+        }
+
+        [Fact]
         public void CanGetPermissionByOperation_WhenParentOperationWasGranted()
         {
             permissionsBuilderService
@@ -185,6 +293,21 @@ namespace Rhino.Security.Tests
             session.Flush();
 
             Permission[] permissions = permissionService.GetPermissionsFor("/Account/Edit");
+            Assert.Equal(1, permissions.Length);
+        }
+
+        [Fact]
+        public void CanGetPermissionByMultipleOperations_WhenParentOperationWasGranted()
+        {
+            permissionsBuilderService
+                .Allow("/Account")
+                .For(user)
+                .On(account)
+                .DefaultLevel()
+                .Save();
+            session.Flush();
+
+            Permission[] permissions = permissionService.GetPermissionsFor(new string[] { "/Account/Edit", "/Account/Disable" });
             Assert.Equal(1, permissions.Length);
         }
 
