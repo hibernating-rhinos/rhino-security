@@ -4,7 +4,7 @@ properties {
   $build_dir = "$base_dir\build" 
   $buildartifacts_dir = "$build_dir\" 
   $sln_file = "$base_dir\Rhino.Security.sln" 
-  $version = "1.3.6.0"
+  $version = "1.3.7.0"
   $humanReadableversion = "1.3"
   $tools_dir = "$base_dir\Tools"
   $release_dir = "$base_dir\Release"

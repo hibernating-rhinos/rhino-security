@@ -14,9 +14,13 @@ Rhino Security make use of Common Service Locator (http://www.codeplex.com/Commo
  * IPermissionsService
 
 ALL services must be TRANSIENT, and the container needs to provide access to the current ISession. 
+
 The following is an example of configuring Rhino Security using Windsor:
-	
-	Kernel.Register(
+
+	WindsorServiceLocator windsorServiceLocator = new WindsorServiceLocator(container);
+	ServiceLocator.SetLocatorProvider(() => windsorServiceLocator);
+
+	container.Register(
 		Component.For<IAuthorizationService>()
 			.ImplementedBy<AuthorizationService>()
 			.Lifestyle.Is(Lifestyle.Transient),
@@ -30,3 +34,5 @@ The following is an example of configuring Rhino Security using Windsor:
 			.ImplementedBy<PermissionsService>()
 			.Lifestyle.Is(Lifestyle.Transient)
 		);
+
+Alternatively Castle Windsor installer is provided in Rhino.Security.Windsor assembly

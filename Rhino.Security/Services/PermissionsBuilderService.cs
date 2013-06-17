@@ -11,8 +11,8 @@ namespace Rhino.Security.Services
 	/// </summary>
 	public class PermissionsBuilderService : IPermissionsBuilderService
 	{
-	    private readonly ISession session;
-	    private readonly IAuthorizationRepository authorizationRepository;
+		private readonly ISession session;
+		private readonly IAuthorizationRepository authorizationRepository;
 		/// <summary>
 		/// Initializes a new instance of the <see cref="PermissionsBuilderService"/> class.
 		/// </summary>
@@ -20,27 +20,29 @@ namespace Rhino.Security.Services
 		/// <param name="authorizationRepository">The authorization editing service.</param>
 		public PermissionsBuilderService(ISession session, IAuthorizationRepository authorizationRepository)
 		{
-		    this.session = session;
-		    this.authorizationRepository = authorizationRepository;
+			this.session = session;
+			this.authorizationRepository = authorizationRepository;
 		}
 
 		/// <summary>
 		/// Builds a permission
 		/// </summary>
 		public class FluentPermissionBuilder : IPermissionBuilder, IForPermissionBuilder, IOnPermissionBuilder,
-		                                       ILevelPermissionBuilder
+											   ILevelPermissionBuilder
 		{
-			private readonly Permission permission = new Permission();
+			private readonly Permission permission;
 			private readonly PermissionsBuilderService permissionBuilderService;
 
 			/// <summary>
 			/// Initializes a new instance of the <see cref="FluentPermissionBuilder"/> class.
 			/// </summary>
+			/// <param name="permission">The permission to build.</param>
 			/// <param name="permissionBuilderService">The permission service.</param>
 			/// <param name="allow">if set to <c>true</c> create an allow permission.</param>
 			/// <param name="operation">The operation.</param>
-			public FluentPermissionBuilder(PermissionsBuilderService permissionBuilderService, bool allow, Operation operation)
+			public FluentPermissionBuilder(Permission permission, PermissionsBuilderService permissionBuilderService, bool allow, Operation operation)
 			{
+				this.permission = permission;
 				this.permissionBuilderService = permissionBuilderService;
 				permission.Allow = allow;
 				permission.Operation = operation;
@@ -55,15 +57,15 @@ namespace Rhino.Security.Services
 				return permission;
 			}
 
-		    /// <summary>
-            /// Builds a permission without saving
-		    /// </summary>
-		    public Permission Build()
-		    {
-                return permission;
-		    }
+			/// <summary>
+			/// Builds a permission without saving
+			/// </summary>
+			public Permission Build()
+			{
+				return permission;
+			}
 
-		    /// <summary>
+			/// <summary>
 			/// Set the user that this permission is built for
 			/// </summary>
 			/// <param name="user">The user.</param>
@@ -111,7 +113,7 @@ namespace Rhino.Security.Services
 			/// <returns></returns>
 			public ILevelPermissionBuilder On<TEntity>(TEntity entity) where TEntity : class
 			{
-				permission.SetEntityType(typeof (TEntity));
+				permission.SetEntityType(typeof(TEntity));
 				permission.EntitySecurityKey = Security.ExtractKey(entity);
 				return this;
 			}
@@ -124,12 +126,12 @@ namespace Rhino.Security.Services
 			/// <returns></returns>
 			public ILevelPermissionBuilder On(string entitiesGroupName)
 			{
-				EntitiesGroup entitiesGroup = 
+				EntitiesGroup entitiesGroup =
 					permissionBuilderService
 						.authorizationRepository
 						.GetEntitiesGroupByName(entitiesGroupName);
 				Guard.Against<ArgumentException>(entitiesGroup == null,
-				                                 "There is no entities group named: " + entitiesGroupName);
+												 "There is no entities group named: " + entitiesGroupName);
 				return On(entitiesGroup);
 			}
 
@@ -217,7 +219,7 @@ namespace Rhino.Security.Services
 		/// <returns></returns>
 		public IForPermissionBuilder Allow(Operation operation)
 		{
-			return new FluentPermissionBuilder(this, true, operation);
+			return new FluentPermissionBuilder(new Permission(), this, true, operation);
 		}
 
 		/// <summary>
@@ -227,7 +229,7 @@ namespace Rhino.Security.Services
 		/// <returns></returns>
 		public IForPermissionBuilder Deny(Operation operation)
 		{
-			return new FluentPermissionBuilder(this, false, operation);
+			return new FluentPermissionBuilder(new Permission(), this, false, operation);
 		}
 	}
 }

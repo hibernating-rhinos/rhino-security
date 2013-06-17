@@ -12,7 +12,6 @@
 		<tags>nhibernate security authorization</tags>
 		<dependencies>
 			<dependency id="NHibernate" version="3.2.0.4000" />
-			<dependency id="log4net" version="1.2.10" />
 			<dependency id="CommonServiceLocator" version="1.0" />
 		</dependencies>
 	</metadata>

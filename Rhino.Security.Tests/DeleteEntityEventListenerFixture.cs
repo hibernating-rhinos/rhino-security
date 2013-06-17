@@ -1,7 +1,4 @@
-﻿using log4net;
-using log4net.Config;
-
-namespace Rhino.Security.Tests
+﻿namespace Rhino.Security.Tests
 {
 	using System;
 	using NHibernate.Criterion;
@@ -10,8 +7,6 @@ namespace Rhino.Security.Tests
 
 	public class DeleteEntityEventListenerFixture : DatabaseFixture
 	{
-		private static readonly ILog _logger = LogManager.GetLogger(typeof (DeleteEntityEventListenerFixture));
-		
 		protected override void BeforeSetup()
 		{
 			//XmlConfigurator.Configure();
@@ -29,7 +24,8 @@ namespace Rhino.Security.Tests
 		//}
 
 		[Fact]
-		public void DoesDeletingEntityRemoveEntityReferences() {
+		public void DoesDeletingEntityRemoveEntityReferences()
+		{
 
 			var account = new Account() { Name = "Bob" };
 			session.Save(account);
@@ -56,8 +52,6 @@ namespace Rhino.Security.Tests
 				.UniqueResult<Permission>();
 
 			Assert.NotNull(permission);
-
-			_logger.Debug("deleting account");
 
 			// Delete account 
 			session.Delete(account);
