@@ -21,9 +21,6 @@ properties {
   $NuGetPackageNameWindsor = "Rhino.Security.Windsor"
   $NuSpecFileNameWindsor = "$NuGetPackageNameWindsor.nuspec"
   $NuSpecFileNameWindsor = "Rhino.Security.Windsor.nuspec"
-  
-  $NugetCoreOut = Join-Path $NuGetPackDir $NuGetPackageName
-  $NugetWindOut = Join-Path $NuGetPackDir $NuGetPackageNameWindsor
 } 
 
 include .\psake_ext.ps1
@@ -109,41 +106,29 @@ task Release -depends Test, Pack, Push {
 
 task PreparePack {
     mkdir $NuGetPackDir
-	mkdir $NugetCoreOut
-	mkdir $NugetWindOut
-    cp $NuSpecFileName $NugetCoreOut
-    cp $NuSpecFileNameWindsor $NugetWindOut
-    mkdir "$NugetCoreOut\lib"
-    mkdir "$NugetCoreOut\lib\net35"
-    mkdir "$NugetWindOut\lib"
-    mkdir "$NugetWindOut\lib\net35"
+    cp $NuSpecFileName $NuGetPackDir
+    cp $NuSpecFileNameWindsor $NuGetPackDir
 }
 
 task PackCore {
-	$s = Join-Path $NugetCoreOut $NuSpecFileName
+    $s = Join-Path $NuGetPackDir $NuSpecFileName
 
-    cp "$build_dir\Rhino.Security.dll" "$NugetCoreOut\lib\net35"
-    cp "$build_dir\Rhino.Security.xml" "$NugetCoreOut\lib\net35"
-    
     $Spec = [xml](get-content $s)
     $Spec.package.metadata.version = ([string]$Spec.package.metadata.version).Replace("{Version}",$Version)
     $Spec.Save($s)
 
-    & ".\$(Join-Path 'tools' 'nuget.exe')" pack $s
+    & ".\$(Join-Path 'tools' 'nuget.exe')" pack -symbols $s
 }
 
 task PackWindsor {
-	$s = Join-Path $NugetWindOut $NuSpecFileNameWindsor
+    $s = Join-Path $NuGetPackDir $NuSpecFileNameWindsor
 
-    cp "$build_dir\Rhino.Security.Windsor.dll" "$NugetWindOut\lib\net35"
-    cp "$build_dir\Rhino.Security.Windsor.xml" "$NugetWindOut\lib\net35"
-	
-	$Spec = [xml](get-content $s)
-	$Spec.package.metadata.version = ([string]$Spec.package.metadata.version).Replace("{Version}",$Version)
+    $Spec = [xml](get-content $s)
+    $Spec.package.metadata.version = ([string]$Spec.package.metadata.version).Replace("{Version}",$Version)
     $Spec.package.metadata.dependencies.dependency[1].version = ([string]$Spec.package.metadata.dependencies.dependency[1].version).Replace("{Version}",$Version)
     $Spec.Save($s)
 
-    & ".\$(Join-Path 'tools' 'nuget.exe')" pack $s
+    & ".\$(Join-Path 'tools' 'nuget.exe')" pack -symbols $s
 }
 
 task Pack -depends Compile, PreparePack, PackCore, PackWindsor {

@@ -29,6 +29,18 @@ namespace Rhino.Security.Tests
                 File.Delete("test.db");
         }
 
+        public AuthorizationServiceWithSecondLevelCacheFixture()
+        {
+            User.DisableEqualityOverrides = true;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            User.DisableEqualityOverrides = false;
+        }
+
         [Fact]
         public void UseSecondLevelCacheForSecurityQuestions()
         {
@@ -70,7 +82,12 @@ namespace Rhino.Security.Tests
                 // should return true since it loads from cache
                 SillyContainer.SessionProvider = () => s3;
                 var anotherAuthorizationService = ServiceLocator.Current.GetInstance<IAuthorizationService>();
-                Assert.True(anotherAuthorizationService.IsAllowed(user, account, "/Account/Edit"));
+
+                // Get fresh user to ensure that code works also when IUser implementation have no proper Equals/GetHashCode overrides.
+                // In such case for example Restrictions.Eq("user", user) results in second level cache miss,
+                // but Restrictions.Eq("user.id", user.SecurityInfo.Identifier) works ok.
+                var freshUser = s3.Get<User>(user.Id);
+                Assert.True(anotherAuthorizationService.IsAllowed(freshUser, account, "/Account/Edit"));
 
                 s3.Transaction.Commit();
             }
@@ -85,7 +102,7 @@ namespace Rhino.Security.Tests
             session.Flush();
             session.Transaction.Commit();
             session.Dispose();
-            
+
             using (var s1 = factory.OpenSession())
             using (var tx = s1.BeginTransaction())
             {

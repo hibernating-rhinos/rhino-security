@@ -15,4 +15,13 @@
 			<dependency id="CommonServiceLocator" version="1.0" />
 		</dependencies>
 	</metadata>
+	<files>
+		<file src="..\..\build\Rhino.Security.dll" target="lib\net35" />
+		<file src="..\..\build\Rhino.Security.pdb" target="lib\net35" />
+		<file src="..\..\build\Rhino.Security.xml" target="lib\net35" />
+		<file src="..\..\acknowledgements.txt" />
+		<file src="..\..\How to Use.txt" />
+		<file src="..\..\license.txt" />
+		<file src="..\..\Rhino.Security\**\*.cs" target="src" />
+	</files>
 </package>

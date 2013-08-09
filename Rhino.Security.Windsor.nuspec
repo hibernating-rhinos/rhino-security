@@ -16,4 +16,12 @@
 			<dependency id="CommonServiceLocator.WindsorAdapter" version="1.0" />
 		</dependencies>
 	</metadata>
+	<files>
+		<file src="..\..\build\Rhino.Security.Windsor.dll" target="lib\net35" />
+		<file src="..\..\build\Rhino.Security.Windsor.pdb" target="lib\net35" />
+		<file src="..\..\build\Rhino.Security.Windsor.xml" target="lib\net35" />
+		<file src="..\..\acknowledgements.txt" />
+		<file src="..\..\license.txt" />
+		<file src="..\..\Rhino.Security.Windsor\**\*.cs" target="src" />
+	</files>
 </package>
