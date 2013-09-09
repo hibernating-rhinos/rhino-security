@@ -24,6 +24,27 @@ namespace Rhino.Security.Tests
         }
 
         [Fact]
+        public void DeeplyNestedUsersGroupCountOfChildren()
+        {
+            UsersGroup group = authorizationRepository.CreateUsersGroup("Parent");
+
+            for (int j = 0; j < 50; j++)
+            {
+                authorizationRepository.CreateChildUserGroupOf(group.Name, "Direct Child #" + j);
+
+            }
+
+            for (int j = 0; j < 50; j++)
+            {
+                group = authorizationRepository.CreateChildUserGroupOf(group.Name, "Child #" + j);
+
+            }
+            group = authorizationRepository.GetUsersGroupByName("Parent");
+            Assert.Equal(51, group.DirectChildren.Count);
+            Assert.Equal(100, group.AllChildren.Count);
+        }
+
+        [Fact]
         public void DeeplyNestedEntitiesGroup()
         {
             EntitiesGroup group = authorizationRepository.CreateEntitiesGroup("Root");
@@ -38,6 +59,28 @@ namespace Rhino.Security.Tests
             EntitiesGroup[] groups = authorizationRepository.GetAncestryAssociationOfEntity(account, "Root");
             Assert.Equal(51, groups.Length);
         }
+
+        [Fact]
+        public void DeeplyNestedEntitiesGroupCountOfChildren()
+        {
+            EntitiesGroup group = authorizationRepository.CreateEntitiesGroup("Parent");
+
+            for (int j = 0; j < 50; j++)
+            {
+                authorizationRepository.CreateChildEntityGroupOf(group.Name, "Direct Child #" + j);
+
+            }
+
+            for (int j = 0; j < 50; j++)
+            {
+                group = authorizationRepository.CreateChildEntityGroupOf(group.Name, "Child #" + j);
+
+            }
+            group = authorizationRepository.GetEntitiesGroupByName("Parent");
+            Assert.Equal(51, group.DirectChildren.Count);
+            Assert.Equal(100, group.AllChildren.Count);
+        }
+
         //Todo: had to session flush for the test pass.
         [Fact]
         public void CanOnlyAssignAccountsThatAreAssignedToMe()
