@@ -2,11 +2,15 @@ using System;
 using NHibernate.Exceptions;
 using Rhino.Security.Model;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Rhino.Security.Tests
 {
 	public class AuthorizationRepositoryFixture : DatabaseFixture
 	{
+        public AuthorizationRepositoryFixture(ITestOutputHelper outputHelper) : base(outputHelper)
+        {}
+
 		[Fact]
 		public void CanSaveUser()
 		{
@@ -74,7 +78,7 @@ namespace Rhino.Security.Tests
 					authorizationRepository.CreateEntitiesGroup("Admininstrators");
 					session.Flush();
 				}).InnerException;
-			Assert.Contains("unique", exception.Message);
+			Assert.Contains("unique", exception.Message, StringComparison.InvariantCultureIgnoreCase);
 		}
 
 		[Fact]
@@ -89,7 +93,7 @@ namespace Rhino.Security.Tests
 					session.Flush();
 				}).InnerException;
 
-			Assert.Contains("unique", exception.Message);
+			Assert.Contains("unique", exception.Message, StringComparison.InvariantCultureIgnoreCase);
 		}
 
 		[Fact]
@@ -154,7 +158,7 @@ namespace Rhino.Security.Tests
 						authorizationRepository.RenameUsersGroup("Admininstrators", "ExistingGroup");
 						session.Flush();
 					}).InnerException;
-			Assert.Contains("unique", exception.Message);
+			Assert.Contains("unique", exception.Message, StringComparison.InvariantCultureIgnoreCase);
 		}
 
 		[Fact]
@@ -194,7 +198,7 @@ namespace Rhino.Security.Tests
 						session.Flush();
 					}).InnerException;
 
-			Assert.Contains("unique", exception.Message);
+			Assert.Contains("unique", exception.Message, StringComparison.InvariantCultureIgnoreCase);
 		}
 
 		[Fact]
@@ -230,7 +234,7 @@ namespace Rhino.Security.Tests
 			session.Evict(group);
 
 			var groups = authorizationRepository.GetAssociatedUsersGroupFor(ayende);
-			Assert.Equal(1, groups.Length);
+			Assert.Single(groups);
 			Assert.Equal("Admins", groups[0].Name);
 		}
 
@@ -364,7 +368,7 @@ namespace Rhino.Security.Tests
 
 
 			var groups = authorizationRepository.GetAncestryAssociation(ayende, "Admins");
-			Assert.Equal(1, groups.Length);
+			Assert.Single(groups);
 			Assert.Equal("Admins", groups[0].Name);
 		}
 
@@ -380,7 +384,7 @@ namespace Rhino.Security.Tests
 			authorizationRepository.AssociateEntityWith(beto, "Executive Accounts");
 
 			var groups = authorizationRepository.GetAncestryAssociationOfEntity(beto, "Executive Accounts");
-			Assert.Equal(1, groups.Length);
+			Assert.Single(groups);
 			Assert.Equal("Executive Accounts", groups[0].Name);
 		}
 
@@ -395,7 +399,7 @@ namespace Rhino.Security.Tests
 
 
 			var groups = authorizationRepository.GetAncestryAssociation(ayende, "Admins");
-			Assert.Equal(0, groups.Length);
+			Assert.Empty(groups);
 		}
 
 		[Fact]
@@ -408,7 +412,7 @@ namespace Rhino.Security.Tests
 			authorizationRepository.CreateEntitiesGroup("Executive Accounts");
 
 			var groups = authorizationRepository.GetAncestryAssociationOfEntity(beto, "Executive Accounts");
-			Assert.Equal(0, groups.Length);
+			Assert.Empty(groups);
 		}
 
 		[Fact]
@@ -428,7 +432,7 @@ namespace Rhino.Security.Tests
 
 
 			var groups = authorizationRepository.GetAncestryAssociation(ayende, "Admins");
-			Assert.Equal(1, groups.Length);
+			Assert.Single(groups);
 			Assert.Equal("Admins", groups[0].Name);
 		}
 
@@ -447,7 +451,7 @@ namespace Rhino.Security.Tests
 			authorizationRepository.AssociateEntityWith(beto, "Manager Accounts");
 
 			var groups = authorizationRepository.GetAncestryAssociationOfEntity(beto, "Executive Accounts");
-			Assert.Equal(1, groups.Length);
+			Assert.Single(groups);
 			Assert.Equal("Executive Accounts", groups[0].Name);
 		}
 
@@ -562,7 +566,7 @@ namespace Rhino.Security.Tests
 			session.Evict(group);
 
 			var groups = authorizationRepository.GetAssociatedEntitiesGroupsFor(ayende);
-			Assert.Equal(1, groups.Length);
+			Assert.Single(groups);
 			Assert.Equal("Accounts", groups[0].Name);
 		}
 
@@ -699,7 +703,7 @@ namespace Rhino.Security.Tests
 			session.Flush();
 
 			associedGroups = authorizationRepository.GetAssociatedUsersGroupFor(user);
-			Assert.Equal(1, associedGroups.Length);
+			Assert.Single(associedGroups);
 		}
 
 		[Fact]
@@ -718,7 +722,7 @@ namespace Rhino.Security.Tests
 			session.Flush();
 
 			associatedGroups = authorizationRepository.GetAssociatedEntitiesGroupsFor(account);
-			Assert.Equal(1, associatedGroups.Length);
+			Assert.Single(associatedGroups);
 		}
 
 		[Fact]

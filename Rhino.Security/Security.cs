@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
-using Microsoft.Practices.ServiceLocation;
+using CommonServiceLocator;
 using NHibernate.Cfg;
 using NHibernate.Event;
 using Rhino.Security.Impl;
@@ -35,7 +36,7 @@ namespace Rhino.Security
 			return extractor.GetSecurityKeyFor(entity);
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Extracts the key from the specified entity using the given object.
 		/// </summary>
 		/// <param name="entity">The entity.</param>

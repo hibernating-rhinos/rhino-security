@@ -2,6 +2,7 @@ using NHibernate;
 using NHibernate.Criterion;
 using Rhino.Security.Model;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Rhino.Security.Tests
 {
@@ -9,7 +10,7 @@ namespace Rhino.Security.Tests
 	{
 		private readonly ICriteria criteria;
 
-		public AuthorizationService_Queries_Fixture()
+		public AuthorizationService_Queries_Fixture(ITestOutputHelper outputHelper) : base(outputHelper)
 		{
 			criteria = session.CreateCriteria(typeof (Account), "account");
 		}

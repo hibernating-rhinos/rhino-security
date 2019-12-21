@@ -1,10 +1,14 @@
 using Rhino.Security.Model;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Rhino.Security.Tests
 {
 	public class AuthorizationServiceFixture : DatabaseFixture
 	{
+        public AuthorizationServiceFixture(ITestOutputHelper outputHelper) : base(outputHelper)
+        { }
+        
 		[Fact]
 		public void WillReturnFalseIfNoPermissionHasBeenDefined()
 		{

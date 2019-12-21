@@ -1,10 +1,14 @@
 using System;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Rhino.Security.Tests
 {
     public class AuthorizationService_Explainations_Fixture : DatabaseFixture
     {
+        public AuthorizationService_Explainations_Fixture(ITestOutputHelper outputHelper) : base(outputHelper)
+        {}
+
         [Fact]
         public void ExplainWhyAllowedWhenAllowedPermissionWasDefinedWithDenyPermissionWithLowerLevel()
         {

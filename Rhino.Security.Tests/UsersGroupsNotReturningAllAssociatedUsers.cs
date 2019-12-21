@@ -1,9 +1,10 @@
 ﻿using System;
-using Microsoft.Practices.ServiceLocation;
+using CommonServiceLocator;
 using NHibernate;
 using Rhino.Security.Interfaces;
 using Xunit;
 using Rhino.Security.Model;
+using Xunit.Abstractions;
 
 
 namespace Rhino.Security.Tests
@@ -14,13 +15,12 @@ namespace Rhino.Security.Tests
         private readonly long idAyende;
 
 
-        public UsersGroupsNotReturningAllAssociatedUsers()
+        public UsersGroupsNotReturningAllAssociatedUsers(ITestOutputHelper outputHelper) : base(outputHelper)
         {
             authorizationService = ServiceLocator.Current.GetInstance<IAuthorizationService>();
             permissionService = ServiceLocator.Current.GetInstance<IPermissionsService>();
             permissionsBuilderService = ServiceLocator.Current.GetInstance<IPermissionsBuilderService>();
             authorizationRepository = ServiceLocator.Current.GetInstance<IAuthorizationRepository>();
-            session.BeginTransaction();
 
             User ayende = new User { Name = "ayende" };
             session.Save(ayende);
@@ -47,7 +47,6 @@ namespace Rhino.Security.Tests
             session.Flush();
             session.Evict(group);
 
-            session.Transaction.Commit();
         }
 
         [Fact]
@@ -60,12 +59,12 @@ namespace Rhino.Security.Tests
             
             User marcus = session.Get<User>(Convert.ToInt64(idMarcus));
             UsersGroup[] marcusGroups = authorizationRepository.GetAssociatedUsersGroupFor(marcus);
-            Assert.Equal(1, marcusGroups.Length);
+            Assert.Single(marcusGroups);
             Assert.Equal(2, marcusGroups[0].Users.Count);
 
             User ayende = session.Get<User>(Convert.ToInt64(idAyende));
             UsersGroup[] ayendeGroups = authorizationRepository.GetAssociatedUsersGroupFor(ayende);
-            Assert.Equal(1, ayendeGroups.Length);
+            Assert.Single(ayendeGroups);
             Assert.Equal(2, ayendeGroups[0].Users.Count);
         }
     }

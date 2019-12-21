@@ -1,108 +1,144 @@
 using System;
 using System.Data.SQLite;
-using Microsoft.Practices.ServiceLocation;
+using CommonServiceLocator;
 using NHibernate;
 using NHibernate.Cache;
 using NHibernate.Cfg;
 using NHibernate.Dialect;
 using NHibernate.Driver;
+using NHibernate.SqlCommand;
 using NHibernate.Tool.hbm2ddl;
 using Rhino.Security.Interfaces;
 using Xunit;
+using Xunit.Abstractions;
 using Environment = NHibernate.Cfg.Environment;
 
 namespace Rhino.Security.Tests
 {
-	public abstract class DatabaseFixture : IDisposable
-	{
-		protected readonly ISessionFactory factory;
-		protected Account account;
-		protected IAuthorizationRepository authorizationRepository;
-		protected IAuthorizationService authorizationService;
-		protected IPermissionsService permissionService;
-		protected IPermissionsBuilderService permissionsBuilderService;
+    [Collection("DatabaseFixture tests")]
+    public abstract class DatabaseFixture : IDisposable
+    {
+        protected readonly ISessionFactory factory;
+        protected Account account;
+        protected IAuthorizationRepository authorizationRepository;
+        protected IAuthorizationService authorizationService;
+        protected IPermissionsService permissionService;
+        protected IPermissionsBuilderService permissionsBuilderService;
 
-		protected ISession session;
-		protected User user;
+        protected ISession session;
+        protected User user;
 
-		protected DatabaseFixture()
-		{
-			BeforeSetup();
+        protected readonly ITestOutputHelper output;
+        public bool UseSqlDatabase;
 
-			SillyContainer.SessionProvider = (() => session);
-			var sillyContainer = new SillyContainer();
-			ServiceLocator.SetLocatorProvider(() => sillyContainer);
+        protected DatabaseFixture(ITestOutputHelper output, bool useSqlDatabase = false)
+        {
+            this.output = output;
+            UseSqlDatabase = useSqlDatabase;
 
-			Assert.NotNull(typeof (SQLiteConnection));
+            BeforeSetup();
 
-			Configuration cfg = new Configuration()
-				.SetProperty(Environment.ConnectionDriver, typeof(SQLite20Driver).AssemblyQualifiedName)
-				.SetProperty(Environment.Dialect, typeof(SQLiteDialect).AssemblyQualifiedName)
-				//.SetProperty(Environment.ConnectionDriver, typeof(Sql2008ClientDriver).AssemblyQualifiedName)
-				//.SetProperty(Environment.Dialect, typeof(MsSql2008Dialect).AssemblyQualifiedName)
-				.SetProperty(Environment.ConnectionString, ConnectionString)
-				//.SetProperty(Environment.ProxyFactoryFactoryClass, typeof(ProxyFactoryFactory).AssemblyQualifiedName)
-				.SetProperty(Environment.ReleaseConnections, "on_close")
-				.SetProperty(Environment.UseSecondLevelCache, "true")
-				.SetProperty(Environment.UseQueryCache, "true")
-				.SetProperty(Environment.CacheProvider, typeof (HashtableCacheProvider).AssemblyQualifiedName)
-				.AddAssembly(typeof (User).Assembly);
+            SillyContainer.SessionProvider = (() => session);
+            var sillyContainer = new SillyContainer();
+            ServiceLocator.SetLocatorProvider(() => sillyContainer);
 
-			Security.Configure<User>(cfg, SecurityTableStructure.Prefix);
+            Assert.NotNull(typeof(SQLiteConnection));
 
-			factory = cfg.BuildSessionFactory();
+            var driverName = typeof(SQLite20Driver).AssemblyQualifiedName;
+            var dialectName = typeof(SQLiteDialect).AssemblyQualifiedName;
+            var releaseConnections = "on_close";
 
-			session = factory.OpenSession();
+            if (useSqlDatabase)
+            {
+                driverName = typeof(Sql2008ClientDriver).AssemblyQualifiedName;
+                dialectName = typeof(MsSql2012Dialect).AssemblyQualifiedName;
+                releaseConnections = "auto";
+            }
 
-			new SchemaExport(cfg).Execute(true, true, false, session.Connection, null);
+            Configuration cfg = new Configuration()
+                .SetProperty(Environment.ConnectionDriver, driverName)
+                .SetProperty(Environment.Dialect, dialectName)
+                .SetProperty(Environment.ConnectionString, ConnectionString)
+                .SetProperty(Environment.ReleaseConnections, releaseConnections)
+                .SetProperty(Environment.UseSecondLevelCache, "true")
+                .SetProperty(Environment.UseQueryCache, "true")
+                .SetProperty(Environment.ShowSql, "true")
+                .SetProperty(Environment.FormatSql, "true")
+                .SetProperty(Environment.CacheProvider, typeof(HashtableCacheProvider).AssemblyQualifiedName)
+                .AddAssembly(typeof(User).Assembly);
 
-			session.BeginTransaction();
+            Security.Configure<User>(cfg, SecurityTableStructure.Prefix);
 
-			SetupEntities();
+            factory = cfg.BuildSessionFactory();
 
-			session.Flush();
-		}
+            session = factory.WithOptions().Interceptor(new XUnitSqlCaptureInterceptor(this.output)).OpenSession();
 
-		public virtual string ConnectionString
-		{
-			get { return "Data Source=:memory:"; }
-		}
+            new SchemaExport(cfg).Execute(false, true, false, session.Connection, null);
 
-		#region IDisposable Members
+            session.BeginTransaction();
 
-		public virtual void Dispose()
-		{
-			if (session.Transaction.IsActive)
-				session.Transaction.Rollback();
-			session.Dispose();
-		}
+            SetupEntities();
 
-		#endregion
+            session.Flush();
+        }
 
-		protected virtual void BeforeSetup()
-		{
-		}
+        public virtual string ConnectionString
+        {
+            get { return UseSqlDatabase ? "Server=(local);Database=tests;Trusted_Connection=True;" : "Data Source=:memory:"; }
+        }
 
-		private void SetupEntities()
-		{
-			user = new User {Name = "Ayende"};
-			account = new Account {Name = "south sand"};
+        #region IDisposable Members
 
-			session.Save(user);
-			session.Save(account);
+        public virtual void Dispose()
+        {
+            if (session.Transaction.IsActive)
+                session.Transaction.Rollback();
+            session.Dispose();
+        }
 
-			authorizationService = ServiceLocator.Current.GetInstance<IAuthorizationService>();
-			permissionService = ServiceLocator.Current.GetInstance<IPermissionsService>();
-			permissionsBuilderService = ServiceLocator.Current.GetInstance<IPermissionsBuilderService>();
-			authorizationRepository = ServiceLocator.Current.GetInstance<IAuthorizationRepository>();
+        #endregion
 
-			authorizationRepository.CreateUsersGroup("Administrators");
-			authorizationRepository.CreateEntitiesGroup("Important Accounts");
-			authorizationRepository.CreateOperation("/Account/Edit");
-			authorizationRepository.CreateOperation("/Account/Disable");
+        protected virtual void BeforeSetup()
+        {
+        }
 
-			authorizationRepository.AssociateUserWith(user, "Administrators");
-			authorizationRepository.AssociateEntityWith(account, "Important Accounts");
-		}
-	}
+        private void SetupEntities()
+        {
+            user = new User { Name = "Ayende" };
+            account = new Account { Name = "south sand" };
+
+            session.Save(user);
+            session.Save(account);
+
+            authorizationService = ServiceLocator.Current.GetInstance<IAuthorizationService>();
+            permissionService = ServiceLocator.Current.GetInstance<IPermissionsService>();
+            permissionsBuilderService = ServiceLocator.Current.GetInstance<IPermissionsBuilderService>();
+            authorizationRepository = ServiceLocator.Current.GetInstance<IAuthorizationRepository>();
+
+            authorizationRepository.CreateUsersGroup("Administrators");
+            authorizationRepository.CreateEntitiesGroup("Important Accounts");
+            authorizationRepository.CreateOperation("/Account/Edit");
+            authorizationRepository.CreateOperation("/Account/Disable");
+
+            authorizationRepository.AssociateUserWith(user, "Administrators");
+            authorizationRepository.AssociateEntityWith(account, "Important Accounts");
+        }
+    }
+
+    public class XUnitSqlCaptureInterceptor : EmptyInterceptor
+    {
+        public XUnitSqlCaptureInterceptor(ITestOutputHelper output)
+        {
+            this.Output = output;
+        }
+
+        public ITestOutputHelper Output { get; set; }
+
+        public override SqlString OnPrepareStatement(SqlString sql)
+        {
+            this.Output.WriteLine(sql.ToString());
+
+            return sql;
+        }
+    }
 }

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.Practices.ServiceLocation;
+using CommonServiceLocator;
 using NHibernate;
 using Rhino.Security.Interfaces;
 using Rhino.Security.Services;
@@ -16,7 +16,8 @@ namespace Rhino.Security.Tests
         {
             if (serviceType == typeof(IAuthorizationService))
                 return new AuthorizationService(GetInstance<IPermissionsService>(),
-                                                GetInstance<IAuthorizationRepository>());
+                                                GetInstance<IAuthorizationRepository>(),
+                                                SessionProvider());
             if (serviceType == typeof(IAuthorizationRepository))
                 return new AuthorizationRepository(SessionProvider());
             if (serviceType == typeof(IPermissionsBuilderService))
@@ -24,7 +25,7 @@ namespace Rhino.Security.Tests
             if (serviceType == typeof(IPermissionsService))
                 return new PermissionsService(GetInstance<IAuthorizationRepository>(), SessionProvider());
             if (serviceType == typeof(IEntityInformationExtractor<Account>))
-                return new AccountInfromationExtractor(SessionProvider());
+                return new AccountInformationExtractor(SessionProvider());
             throw new NotImplementedException();
         }
 
